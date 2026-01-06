@@ -9,3 +9,11 @@ Normalize job descriptions
 Match candidates to roles
 
 ------->>>>>>>>>>>> 
+
+
+
+TO TEST the interface : 
+
+uvicorn app:app --reload
+
+streamlit run streamlit_frontend.py
