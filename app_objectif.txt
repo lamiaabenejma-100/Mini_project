@@ -1,0 +1,11 @@
+# -- HR & Recruitment Intelligence Assistant --
+
+Extract candidate info from CV text → JSON
+
+Generate SQL queries on employee databases
+
+Normalize job descriptions
+
+Match candidates to roles
+
+------->>>>>>>>>>>> 
