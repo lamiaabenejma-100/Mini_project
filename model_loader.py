@@ -1,45 +1,47 @@
+# model_loader.py
 import os
 import torch
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from dotenv import load_dotenv
 from pathlib import Path
 
-# ================= FORCE LOAD .env =================
+# ===== LOAD .env SAFELY =====
 BASE_DIR = Path(__file__).resolve().parent
 ENV_PATH = BASE_DIR / ".env"
+load_dotenv(ENV_PATH)
 
-load_dotenv(dotenv_path=ENV_PATH, override=True)
-
-HF_TOKEN = os.getenv("HF_TOKEN")
-
-print("DEBUG HF_TOKEN:", "FOUND" if HF_TOKEN else "NOT FOUND")
-
-if not HF_TOKEN:
-    raise ValueError("HF_TOKEN n'est pas défini dans l'environnement")
-
+HF_TOKEN = os.getenv("HF_TOKEN", "").strip()
 MODEL_NAME = "meta-llama/Llama-3.2-1B-Instruct"
 
-tokenizer = None
-model = None
+_tokenizer = None
+_model = None
 
 def load_model():
-    global tokenizer, model
-    if model is None:
-        tokenizer = AutoTokenizer.from_pretrained(
+    global _tokenizer, _model
+
+    if not HF_TOKEN:
+        return None, None   # ❌ Pas de crash, juste message d'erreur
+
+    if _model is None:
+        _tokenizer = AutoTokenizer.from_pretrained(
             MODEL_NAME,
             token=HF_TOKEN
         )
-        model = AutoModelForCausalLM.from_pretrained(
+        _model = AutoModelForCausalLM.from_pretrained(
             MODEL_NAME,
             device_map="auto",
             torch_dtype=torch.float16,
             token=HF_TOKEN,
             low_cpu_mem_usage=True
         )
-    return tokenizer, model
 
-def generate(prompt, max_new_tokens=500):
+    return _tokenizer, _model
+
+def generate(prompt: str, max_new_tokens: int = 500) -> str:
     tokenizer, model = load_model()
+    if model is None:
+        return "ERROR: Model not loaded. Check HF_TOKEN."
+
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
 
     with torch.no_grad():
