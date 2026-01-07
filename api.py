@@ -1,58 +1,41 @@
-# app.py
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from pydantic import BaseModel
-from model_handler import generate_from_llama, extract_json_from_text, validate_sql    # les focntions des autres 
+from model_loader import generate
 
-# --- FastAPI App ---
-app = FastAPI()
+app = FastAPI(title="AI HR Assistant API")
 
-# --- Domain-Specific Assistant Route ---
-class AssistantRequest(BaseModel):
-    user_message: str
+class CVRequest(BaseModel):
+    text: str
 
-@app.post("/assistant")
-async def assistant(request: AssistantRequest):
-    """This route is the domain-specific assistant"""
-    user_message = request.user_message
-    prompt = f"Answer this question based on your knowledge: {user_message}"
-    
-    # Generate model response
-    response = generate_from_llama(prompt)
-    
-    # Return the assistant's response
-    return {"response": response}
+@app.get("/")
+def home():
+    return {"status": "API running successfully"}
 
-# --- Structured Output Generator Route ---
-class StructuredOutputRequest(BaseModel):
-    raw_text: str
+@app.post("/extract-cv")
+def extract_cv(data: CVRequest):
 
-@app.post("/generate-structured-output")
-async def generate_structured_output(request: StructuredOutputRequest):
-    """This route generates structured output (JSON) from raw text"""
-    raw_text = request.raw_text
-    
-    try:
-        # Extract structured data from the raw text
-        structured_output = extract_json_from_text(raw_text)
-        return {"json": structured_output}
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Error: {str(e)}")
+    prompt = f"""<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+Extract info into EXACT JSON format.
 
-# --- Model Evaluation Route ---
-class EvaluationRequest(BaseModel):
-    input_text: str
-    expected_output: str
+EXAMPLE:
+Input: "Alex Rivera, Python Dev with 3 years at Tesla."
+Output: {{
+  "name": "Alex Rivera",
+  "applying_for": "Python Developer",
+  "technical_skills": ["Python"],
+  "soft_skills": [],
+  "experience": "3 years",
+  "summary": "3 years at Tesla."
+}}
 
-@app.post("/evaluate-model")
-async def evaluate_model(request: EvaluationRequest):
-    """This route evaluates the model's response against an expected output"""
-    input_text = request.input_text
-    expected_output = request.expected_output
-    
-    # Generate the model's output
-    generated_output = generate_from_llama(input_text)
-    
-    # Perform a simple evaluation (you can expand this to use a more complex evaluation metric)
-    is_correct = (generated_output.strip() == expected_output.strip())
-    
-    return {"generated_output": generated_output, "is_correct": is_correct}
+Now extract this:
+<|eot_id|>
+<|start_header_id|>user<|end_header_id|>
+{data.text}
+<|eot_id|>
+<|start_header_id|>assistant<|end_header_id|>
+"""
+
+    result = generate(prompt)
+    return {"result": result}
+
