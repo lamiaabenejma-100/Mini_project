@@ -37,4 +37,3 @@ Now extract this:
 """
     result = generate(prompt)
     return {"result": result}
-

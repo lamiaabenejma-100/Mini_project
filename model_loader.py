@@ -18,40 +18,20 @@ _model = None
 
 def load_model():
     global _tokenizer, _model
-
     if not HF_TOKEN:
-        return None, None   # ❌ Pas de crash, juste message d'erreur
-
+        return None, None
     if _model is None:
-        _tokenizer = AutoTokenizer.from_pretrained(
-            MODEL_NAME,
-            token=HF_TOKEN
-        )
+        _tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME, token=HF_TOKEN)
         _model = AutoModelForCausalLM.from_pretrained(
-            MODEL_NAME,
-            device_map="auto",
-            torch_dtype=torch.float16,
-            token=HF_TOKEN,
-            low_cpu_mem_usage=True
+            MODEL_NAME, device_map="auto", torch_dtype=torch.float16, token=HF_TOKEN, low_cpu_mem_usage=True
         )
-
     return _tokenizer, _model
 
 def generate(prompt: str, max_new_tokens: int = 500) -> str:
     tokenizer, model = load_model()
     if model is None:
         return "ERROR: Model not loaded. Check HF_TOKEN."
-
     inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
-
     with torch.no_grad():
-        output = model.generate(
-            **inputs,
-            max_new_tokens=max_new_tokens,
-            temperature=0.1
-        )
-
-    return tokenizer.decode(
-        output[0][inputs.input_ids.shape[1]:],
-        skip_special_tokens=True
-    )
+        output = model.generate(**inputs, max_new_tokens=max_new_tokens, temperature=0.1)
+    return tokenizer.decode(output[0][inputs.input_ids.shape[1]:], skip_special_tokens=True)
