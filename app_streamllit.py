@@ -1,7 +1,7 @@
 # app_streamlit.py
 import streamlit as st
 import json
-import requests  # <-- nouveau : pour appeler ton API
+import requests  
 
 # ================= SESSION =================
 if "candidate_memory" not in st.session_state:
@@ -15,7 +15,7 @@ if "last_res" not in st.session_state:
 st.set_page_config(page_title="llamaHR", layout="wide")
 
 # ================= STYLING =================
-st.markdown("""...""", unsafe_allow_html=True)  # ton CSS inchangé
+st.markdown("""...""", unsafe_allow_html=True)  
 
 # ================= BRANDING =================
 st.markdown('<div class="brand-corner">🦙 llamaHR</div>', unsafe_allow_html=True)
